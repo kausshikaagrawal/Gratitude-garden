@@ -89,7 +89,7 @@ This project was built to explore how emotional journaling can be made more enga
 
 ## Live Demo
 
-Add the Vercel deployment link after deployment:
+Add the Vercel deployment link after deployment:https://vercel.com/kausshikaagrawals-projects/gratitude-garden
 
 ```bash id="9khxiy"
 https://your-vercel-link.vercel.app
