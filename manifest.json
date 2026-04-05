@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Kaushika's Garden",
+  "description": "A beautiful virtual garden to log gratitude and release anxiety.",
+  "version": "1.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Open Garden"
+  },
+  "permissions": [
+    "storage"
+  ]
+}
