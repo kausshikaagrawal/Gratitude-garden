@@ -1,5 +1,6 @@
 import { sql, ensureDb } from './_db.js';
 import bcrypt from 'bcryptjs';
+import { signToken } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
 
     const { rows: existing } = await sql`SELECT id FROM users WHERE username = ${username}`;
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'Username already taken' });
+      return res.status(409).json({ error: 'Username already taken. Please click Log In!' });
     }
 
     const parsedAge = age ? parseInt(age, 10) : null;
@@ -37,9 +38,19 @@ export default async function handler(req, res) {
       RETURNING id
     `;
 
-    return res.status(201).json({ message: 'User registered successfully', userId: rows[0].id });
+    const userId = rows[0]?.id || Date.now();
+    const isAdmin = String(username).toLowerCase() === (process.env.ADMIN_USERNAME || 'admin').toLowerCase();
+    const token = signToken({ userId, username, isAdmin });
+
+    return res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      username,
+      userId,
+      isAdmin
+    });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Registration failed' });
   }
 }

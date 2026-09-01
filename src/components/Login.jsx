@@ -40,16 +40,15 @@ export default function Login({ onLoginSuccess }) {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      if (isRegistering) {
-        // Automatically switch to login after registration
+      if (data.token) {
+        onLoginSuccess(data.token, data.username);
+      } else if (isRegistering) {
         setIsRegistering(false);
         setError('Registration successful! Please log in.');
         setUsername('');
         setPassword('');
         setAge('');
         setGender('');
-      } else {
-        onLoginSuccess(data.token, data.username);
       }
     } catch (err) {
       setError(err.message);

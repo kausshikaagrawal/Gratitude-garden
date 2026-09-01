@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 let vercelSql = null;
 
 try {
@@ -7,10 +10,33 @@ try {
   console.warn('@vercel/postgres import warning:', e.message);
 }
 
-const memoryUsers = [];
-const memoryActivities = [];
-let userIdCounter = 1;
-let activityIdCounter = 1;
+const TMP_DB_PATH = path.join('/tmp', 'gratitude_db.json');
+
+function loadMemoryDb() {
+  try {
+    if (fs.existsSync(TMP_DB_PATH)) {
+      const content = fs.readFileSync(TMP_DB_PATH, 'utf8');
+      const data = JSON.parse(content);
+      return {
+        users: data.users || [],
+        activities: data.activities || [],
+        userIdCounter: data.userIdCounter || 1,
+        activityIdCounter: data.activityIdCounter || 1
+      };
+    }
+  } catch (e) {
+    console.warn("Failed to load tmp db:", e);
+  }
+  return { users: [], activities: [], userIdCounter: 1, activityIdCounter: 1 };
+}
+
+function saveMemoryDb(db) {
+  try {
+    fs.writeFileSync(TMP_DB_PATH, JSON.stringify(db), 'utf8');
+  } catch (e) {
+    console.warn("Failed to save tmp db:", e);
+  }
+}
 
 function usePostgres() {
   return Boolean(
@@ -49,7 +75,7 @@ export async function ensureDb() {
         )
       `;
     } catch (e) {
-      console.warn("Postgres init warning, using memory fallback:", e.message);
+      console.warn("Postgres init warning, using file fallback:", e.message);
     }
   }
 }
@@ -59,29 +85,34 @@ export async function sql(strings, ...values) {
     try {
       return await vercelSql(strings, ...values);
     } catch (e) {
-      console.warn("Postgres query error, falling back to memory:", e.message);
+      console.warn("Postgres query error, falling back to file store:", e.message);
     }
   }
 
-  // Fallback memory implementation
+  // File-backed fallback implementation
+  const memoryDb = loadMemoryDb();
+  const memoryUsers = memoryDb.users;
+  const memoryActivities = memoryDb.activities;
+
   const query = strings.join('?').trim();
   
   if (query.includes('SELECT id FROM users WHERE username =')) {
     const username = values[0];
-    const user = memoryUsers.find(u => u.username === username);
+    const user = memoryUsers.find(u => u.username.toLowerCase() === String(username).toLowerCase());
     return { rows: user ? [{ id: user.id }] : [] };
   }
 
   if (query.includes('SELECT * FROM users WHERE username =')) {
     const username = values[0];
-    const user = memoryUsers.find(u => u.username === username);
+    const user = memoryUsers.find(u => u.username.toLowerCase() === String(username).toLowerCase());
     return { rows: user ? [user] : [] };
   }
 
   if (query.includes('INSERT INTO users')) {
     const [username, password_hash, age, gender] = values;
-    const user = { id: userIdCounter++, username, password_hash, age, gender, created_at: Date.now() };
+    const user = { id: memoryDb.userIdCounter++, username, password_hash, age, gender, created_at: Date.now() };
     memoryUsers.push(user);
+    saveMemoryDb(memoryDb);
     return { rows: [{ id: user.id }] };
   }
 
@@ -95,8 +126,9 @@ export async function sql(strings, ...values) {
 
   if (query.includes('INSERT INTO activities')) {
     const [user_id, type, text, timestamp] = values;
-    const act = { id: activityIdCounter++, user_id, type, text: text || '', timestamp };
+    const act = { id: memoryDb.activityIdCounter++, user_id, type, text: text || '', timestamp };
     memoryActivities.push(act);
+    saveMemoryDb(memoryDb);
     return { rows: [{ id: act.id }] };
   }
 
@@ -184,11 +216,14 @@ export async function sql(strings, ...values) {
 
   if (query.includes('DELETE FROM activities WHERE user_id =')) {
     const userId = values[0];
+    let modified = false;
     for (let i = memoryActivities.length - 1; i >= 0; i--) {
       if (memoryActivities[i].user_id === userId) {
         memoryActivities.splice(i, 1);
+        modified = true;
       }
     }
+    if (modified) saveMemoryDb(memoryDb);
     return { rows: [] };
   }
 

@@ -18,20 +18,20 @@ export default async function handler(req, res) {
     const { rows } = await sql`SELECT * FROM users WHERE username = ${username}`;
     const user = rows[0];
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'User not found. Please click "Plant your first seed" to register!' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Incorrect password. Please try again.' });
     }
 
-    const isAdmin = user.username === (process.env.ADMIN_USERNAME || '');
+    const isAdmin = String(user.username).toLowerCase() === (process.env.ADMIN_USERNAME || 'admin').toLowerCase();
     const token = signToken({ userId: user.id, username: user.username, isAdmin });
 
     return res.json({ token, username: user.username, userId: user.id, isAdmin });
   } catch (error) {
     console.error('Login error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Login failed' });
   }
 }
