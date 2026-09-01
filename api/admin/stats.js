@@ -11,6 +11,13 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
+  const adminKey = req.headers['x-admin-key'] || req.headers['x-setup-key'] || req.query.adminKey;
+  const isValidAdminKey = adminKey === 'Kausshika' || (user && user.isAdmin);
+
+  if (!isValidAdminKey) {
+    return res.status(403).json({ error: 'Admin access denied. Invalid Secret Admin Key.' });
+  }
+
   try {
     await ensureDb();
 

@@ -21,17 +21,31 @@ const GENDER_COLORS = {
 const CHART_GRADIENT_ID = 'adminAreaGradient';
 
 export default function AdminDashboard({ token }) {
+  const [adminKey, setAdminKey] = useState(localStorage.getItem('gratitude_admin_key') || '');
+  const [keyInput, setKeyInput] = useState('');
+  const [keyError, setKeyError] = useState('');
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (adminKey !== 'Kausshika') return;
+
     async function fetchStats() {
+      setLoading(true);
+      setError(null);
       try {
         const res = await fetch('/api/admin/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-admin-key': adminKey
+          }
         });
-        if (!res.ok) throw new Error('Failed to load admin stats');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to load admin stats');
+        }
         const data = await res.json();
         setStats(data);
       } catch (err) {
@@ -41,7 +55,51 @@ export default function AdminDashboard({ token }) {
       }
     }
     fetchStats();
-  }, [token]);
+  }, [token, adminKey]);
+
+  const handleKeySubmit = (e) => {
+    e.preventDefault();
+    if (keyInput.trim() === 'Kausshika') {
+      localStorage.setItem('gratitude_admin_key', 'Kausshika');
+      setAdminKey('Kausshika');
+      setKeyError('');
+    } else {
+      setKeyError('Invalid Admin Key! Access denied.');
+    }
+  };
+
+  if (adminKey !== 'Kausshika') {
+    return (
+      <section className="view active">
+        <div className="login-container" style={{ minHeight: '60vh' }}>
+          <div className="glass-panel login-panel" style={{ maxWidth: '420px', textAlign: 'center' }}>
+            <h2>👑 Admin Access Only</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+              Please enter the Secret Admin Key to unlock community analytics.
+            </p>
+
+            {keyError && <div className="error-message">{keyError}</div>}
+
+            <form onSubmit={handleKeySubmit} className="login-form">
+              <div className="form-group">
+                <label>Secret Admin Key</label>
+                <input
+                  type="password"
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder="Enter Secret Key"
+                  required
+                />
+              </div>
+              <button type="submit" className="submit-btn primary">
+                Unlock Admin Dashboard 🔓
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) {
     return (
@@ -60,6 +118,13 @@ export default function AdminDashboard({ token }) {
         <div className="header-banner glass-panel">
           <h2>Admin Dashboard</h2>
           <p style={{ color: '#dc2626' }}>{error}</p>
+          <button
+            onClick={() => { localStorage.removeItem('gratitude_admin_key'); setAdminKey(''); }}
+            className="submit-btn"
+            style={{ marginTop: '1rem', width: 'auto', display: 'inline-flex' }}
+          >
+            🔒 Re-enter Admin Key
+          </button>
         </div>
       </section>
     );
@@ -105,9 +170,18 @@ export default function AdminDashboard({ token }) {
 
   return (
     <section className="view active" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="header-banner glass-panel">
-        <h2>👑 Admin Dashboard</h2>
-        <p>Community analytics, demographics & engagement overview</p>
+      <div className="header-banner glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2>👑 Admin Dashboard</h2>
+          <p>Community analytics, demographics & engagement overview</p>
+        </div>
+        <button
+          onClick={() => { localStorage.removeItem('gratitude_admin_key'); setAdminKey(''); }}
+          className="submit-btn"
+          style={{ width: 'auto', padding: '0.6rem 1.2rem', fontSize: '0.9rem', background: '#dc2626' }}
+        >
+          🔒 Lock Admin
+        </button>
       </div>
 
       {/* Overview Cards */}

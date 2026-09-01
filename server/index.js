@@ -160,6 +160,13 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/admin/stats', authenticateToken, async (req, res) => {
+  const adminKey = req.headers['x-admin-key'] || req.headers['x-setup-key'] || req.query.adminKey;
+  const isValidAdminKey = adminKey === 'Kausshika' || (req.user && req.user.isAdmin);
+
+  if (!isValidAdminKey) {
+    return res.status(403).json({ error: 'Admin access denied. Invalid Secret Admin Key.' });
+  }
+
   try {
     const db = await getDb();
 
