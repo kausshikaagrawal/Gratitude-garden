@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
-  PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis,
+  PieChart, Pie, Cell, AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 const MOOD_COLORS = {
   gratitude: '#059669',
   anxiety: '#dc2626'
+};
+
+const GENDER_COLORS = {
+  Female: '#ec4899',
+  Male: '#3b82f6',
+  'Non-binary': '#a855f7',
+  'Prefer not to say': '#64748b',
+  Other: '#f59e0b',
+  Unspecified: '#94a3b8'
 };
 
 const CHART_GRADIENT_ID = 'adminAreaGradient';
@@ -57,7 +66,6 @@ export default function AdminDashboard({ token }) {
   }
 
   const gratitudeTotal = stats.moodDistribution.find(m => m.type === 'gratitude')?.count || 0;
-  const anxietyTotal = stats.moodDistribution.find(m => m.type === 'anxiety')?.count || 0;
   const gratitudeRatio = stats.totalEntries > 0
     ? Math.round((gratitudeTotal / stats.totalEntries) * 100)
     : 0;
@@ -68,11 +76,18 @@ export default function AdminDashboard({ token }) {
     color: MOOD_COLORS[m.type]
   }));
 
+  const genderData = (stats.genderDemographics || []).map(g => ({
+    name: g.gender,
+    value: g.count,
+    color: GENDER_COLORS[g.gender] || '#059669'
+  }));
+
+  const ageData = stats.ageDemographics || [];
+
   // Fill missing days in the 30-day trend
   const trendData = (() => {
     const map = {};
-    stats.dailyActivity.forEach(d => {
-      // Handle date formatting — could be ISO or date string
+    (stats.dailyActivity || []).forEach(d => {
       const dateKey = typeof d.date === 'string' ? d.date.split('T')[0] : d.date;
       map[dateKey] = d.count;
     });
@@ -89,10 +104,10 @@ export default function AdminDashboard({ token }) {
   })();
 
   return (
-    <section className="view active">
+    <section className="view active" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div className="header-banner glass-panel">
         <h2>👑 Admin Dashboard</h2>
-        <p>Community analytics & engagement overview</p>
+        <p>Community analytics, demographics & engagement overview</p>
       </div>
 
       {/* Overview Cards */}
@@ -164,6 +179,72 @@ export default function AdminDashboard({ token }) {
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Demographics Section */}
+      <div className="admin-split">
+        <div className="admin-section glass-panel">
+          <h3>📊 Gender Demographics</h3>
+          {genderData.length > 0 ? (
+            <>
+              <div style={{ height: '200px', marginTop: '0.5rem' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={genderData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={75}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {genderData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mood-legend" style={{ flexWrap: 'wrap', gap: '0.8rem' }}>
+                {genderData.map(d => (
+                  <div key={d.name} className="mood-legend-item">
+                    <span className="mood-dot" style={{ background: d.color }} />
+                    <span>{d.name}: {d.value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="empty-chart-text">No demographic data yet</p>
+          )}
+        </div>
+
+        <div className="admin-section glass-panel">
+          <h3>🎂 Age Group Demographics</h3>
+          {ageData.length > 0 ? (
+            <div style={{ height: '200px', marginTop: '0.5rem' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="group" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      borderColor: 'var(--border)',
+                      borderRadius: '12px'
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="empty-chart-text">No age data yet</p>
+          )}
         </div>
       </div>
 

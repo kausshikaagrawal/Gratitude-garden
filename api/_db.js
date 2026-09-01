@@ -10,9 +10,18 @@ export async function ensureDb() {
       id SERIAL PRIMARY KEY,
       username VARCHAR(255) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
+      age INTEGER,
+      gender VARCHAR(50),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
   `;
+
+  try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)`;
+  } catch (e) {
+    // Column might already exist
+  }
 
   await sql`
     CREATE TABLE IF NOT EXISTS activities (

@@ -19,7 +19,9 @@ export async function getDb() {
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT UNIQUE NOT NULL,
-          password_hash TEXT NOT NULL
+          password_hash TEXT NOT NULL,
+          age INTEGER,
+          gender TEXT
         );
         CREATE TABLE IF NOT EXISTS activities (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,6 +32,15 @@ export async function getDb() {
           FOREIGN KEY(user_id) REFERENCES users(id)
         );
       `);
+
+      // Migration for existing tables
+      try {
+        await db.exec(`ALTER TABLE users ADD COLUMN age INTEGER;`);
+      } catch (e) { /* column exists */ }
+      try {
+        await db.exec(`ALTER TABLE users ADD COLUMN gender TEXT;`);
+      } catch (e) { /* column exists */ }
+
       return db;
     });
   }

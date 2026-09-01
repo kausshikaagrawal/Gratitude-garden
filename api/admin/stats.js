@@ -59,6 +59,43 @@ export default async function handler(req, res) {
       WHERE timestamp >= ${todayStart.getTime()}
     `;
 
+    // Gender Distribution
+    const { rows: genderResult } = await sql`
+      SELECT COALESCE(gender, 'Unspecified') as gender, COUNT(*) as count
+      FROM users
+      GROUP BY COALESCE(gender, 'Unspecified')
+    `;
+
+    // Age Group Distribution
+    const { rows: allUsers } = await sql`SELECT age FROM users`;
+    const ageGroups = {
+      'Under 18': 0,
+      '18-24': 0,
+      '25-34': 0,
+      '35-44': 0,
+      '45+': 0,
+      'Unspecified': 0
+    };
+
+    allUsers.forEach(u => {
+      const ageNum = u.age != null ? Number(u.age) : null;
+      if (ageNum == null) {
+        ageGroups['Unspecified']++;
+      } else if (ageNum < 18) {
+        ageGroups['Under 18']++;
+      } else if (ageNum <= 24) {
+        ageGroups['18-24']++;
+      } else if (ageNum <= 34) {
+        ageGroups['25-34']++;
+      } else if (ageNum <= 44) {
+        ageGroups['35-44']++;
+      } else {
+        ageGroups['45+']++;
+      }
+    });
+
+    const ageDemographics = Object.entries(ageGroups).map(([group, count]) => ({ group, count }));
+
     return res.json({
       totalUsers: Number(userCountResult[0].count),
       totalEntries: Number(entryCountResult[0].count),
@@ -66,6 +103,8 @@ export default async function handler(req, res) {
       activeToday: Number(activeTodayResult[0].count),
       moodDistribution: moodResult.map(r => ({ type: r.type, count: Number(r.count) })),
       dailyActivity: dailyResult.map(r => ({ date: r.date, count: Number(r.count) })),
+      genderDemographics: genderResult.map(r => ({ gender: r.gender, count: Number(r.count) })),
+      ageDemographics,
       topUsers: topUsersResult.map(r => ({
         username: r.username,
         entries: Number(r.entries),

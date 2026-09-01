@@ -4,6 +4,8 @@ export default function Login({ onLoginSuccess }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -13,11 +15,13 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
 
     const url = isRegistering ? '/api/register' : '/api/login';
+    const payload = isRegistering ? { username, password, age, gender } : { username, password };
+
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(payload)
       });
 
       let data;
@@ -42,6 +46,8 @@ export default function Login({ onLoginSuccess }) {
         setError('Registration successful! Please log in.');
         setUsername('');
         setPassword('');
+        setAge('');
+        setGender('');
       } else {
         onLoginSuccess(data.token, data.username);
       }
@@ -79,6 +85,38 @@ export default function Login({ onLoginSuccess }) {
               placeholder="Enter your secret key"
             />
           </div>
+
+          {isRegistering && (
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Age</label>
+                <input 
+                  type="number" 
+                  min="13" 
+                  max="120" 
+                  value={age} 
+                  onChange={(e) => setAge(e.target.value)} 
+                  placeholder="e.g. 24"
+                />
+              </div>
+              <div className="form-group">
+                <label>Gender</label>
+                <select 
+                  value={gender} 
+                  onChange={(e) => setGender(e.target.value)} 
+                  className="form-select"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           <button type="submit" disabled={loading} className="submit-btn primary">
             {loading ? 'Processing...' : (isRegistering ? 'Create Account' : 'Log In')}
           </button>

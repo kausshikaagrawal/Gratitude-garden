@@ -28,7 +28,7 @@ const authenticateToken = (req, res, next) => {
 
 app.post('/api/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, age, gender } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
     const db = await getDb();
@@ -37,12 +37,19 @@ app.post('/api/register', async (req, res) => {
     const existingUser = await db.get('SELECT id FROM users WHERE username = ?', [username]);
     if (existingUser) return res.status(409).json({ error: 'Username already taken' });
 
+    const parsedAge = age ? parseInt(age, 10) : null;
+    const cleanGender = gender ? String(gender).trim() : null;
+
     // Hash password & store
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await db.run('INSERT INTO users (username, password_hash) VALUES (?, ?)', [username, hashedPassword]);
+    const result = await db.run(
+      'INSERT INTO users (username, password_hash, age, gender) VALUES (?, ?, ?, ?)',
+      [username, hashedPassword, parsedAge, cleanGender]
+    );
 
     res.status(201).json({ message: 'User registered successfully', userId: result.lastID });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -193,6 +200,42 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       ORDER BY date ASC
     `, [thirtyDaysAgo]);
 
+    // Gender Distribution
+    const genderResult = await db.all(`
+      SELECT COALESCE(gender, 'Unspecified') as gender, COUNT(*) as count
+      FROM users
+      GROUP BY COALESCE(gender, 'Unspecified')
+    `);
+
+    // Age Group Distribution
+    const allUsers = await db.all(`SELECT age FROM users`);
+    const ageGroups = {
+      'Under 18': 0,
+      '18-24': 0,
+      '25-34': 0,
+      '35-44': 0,
+      '45+': 0,
+      'Unspecified': 0
+    };
+
+    allUsers.forEach(u => {
+      if (!u.age) {
+        ageGroups['Unspecified']++;
+      } else if (u.age < 18) {
+        ageGroups['Under 18']++;
+      } else if (u.age <= 24) {
+        ageGroups['18-24']++;
+      } else if (u.age <= 34) {
+        ageGroups['25-34']++;
+      } else if (u.age <= 44) {
+        ageGroups['35-44']++;
+      } else {
+        ageGroups['45+']++;
+      }
+    });
+
+    const ageDemographics = Object.entries(ageGroups).map(([group, count]) => ({ group, count }));
+
     res.json({
       totalUsers: userCount?.count || 0,
       totalEntries: entryCount?.count || 0,
@@ -200,6 +243,8 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       activeToday: activeTodayResult?.count || 0,
       moodDistribution: moodResult.map(r => ({ type: r.type, count: r.count })),
       dailyActivity: dailyResult.map(r => ({ date: r.date, count: r.count })),
+      genderDemographics: genderResult.map(r => ({ gender: r.gender, count: r.count })),
+      ageDemographics,
       topUsers: topUsersResult.map(r => ({
         username: r.username,
         entries: r.entries,

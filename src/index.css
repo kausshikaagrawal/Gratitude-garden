@@ -158,8 +158,8 @@ textarea:focus { outline: none; border-color: var(--primary); background: white;
 .login-form { display: flex; flex-direction: column; gap: 1.5rem; }
 .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
 .form-group label { font-size: 0.95rem; font-weight: 600; color: #064e3b; }
-.form-group input { padding: 1rem; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.5); font-size: 1rem; color: var(--text-main); outline: none; transition: all 0.3s ease; }
-.form-group input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-light); }
+.form-group input, .form-group select { padding: 1rem; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.5); font-size: 1rem; color: var(--text-main); outline: none; transition: all 0.3s ease; }
+.form-group input:focus, .form-group select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-light); }
 .submit-btn { padding: 1rem; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; transition: transform 0.2s, background 0.3s; background: var(--primary); color: white; display: flex; justify-content: center; align-items: center; }
 .submit-btn:hover { transform: translateY(-2px); background: var(--primary-hover); }
 .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }

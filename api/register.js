@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try {
     await ensureDb();
 
-    const { username, password } = req.body;
+    const { username, password, age, gender } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
@@ -27,10 +27,13 @@ export default async function handler(req, res) {
       return res.status(409).json({ error: 'Username already taken' });
     }
 
+    const parsedAge = age ? parseInt(age, 10) : null;
+    const cleanGender = gender ? String(gender).trim() : null;
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const { rows } = await sql`
-      INSERT INTO users (username, password_hash)
-      VALUES (${username}, ${hashedPassword})
+      INSERT INTO users (username, password_hash, age, gender)
+      VALUES (${username}, ${hashedPassword}, ${parsedAge}, ${cleanGender})
       RETURNING id
     `;
 
