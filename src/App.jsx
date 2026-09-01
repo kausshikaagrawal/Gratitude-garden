@@ -56,7 +56,7 @@ function App() {
         <header className="glass-panel">
           <div className="logo">
             <span className="logo-icon">🌿</span>
-            <h1>{username ? `${username}'s Garden` : 'Gratitude Garden'}</h1>
+            <h1>{username ? `${username}'s Diary` : 'My Diary'}</h1>
           </div>
           {token && (
             <nav className="tabs">

@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Gratitude Garden",
-  "description": "A beautiful virtual garden to log gratitude and release anxiety.",
+  "name": "My Diary",
+  "description": "A beautiful virtual diary to log gratitude and release anxiety.",
   "version": "1.0",
   "action": {
     "default_popup": "index.html",
-    "default_title": "Open Garden"
+    "default_title": "Open My Diary"
   },
   "permissions": [
     "storage"

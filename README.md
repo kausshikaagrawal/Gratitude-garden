@@ -1,10 +1,10 @@
-# Gratitude Garden
+# My Diary
 
 A wellness-focused journaling application that visualizes gratitude entries as a growing virtual garden.
 
 ## Overview
 
-Gratitude Garden is an interactive journaling app designed to encourage daily gratitude reflection through a visual metaphor. Each gratitude entry adds growth to a virtual garden, while anxiety-release actions record emotional release and clear space.
+My Diary is an interactive journaling app designed to encourage daily gratitude reflection through a visual metaphor. Each gratitude entry adds growth to a virtual garden, while anxiety-release actions record emotional release and clear space.
 
 The project focuses on frontend engineering, client-side state management, persistent local storage, and user-centered interface design.
 
