@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Heatmap from './Heatmap';
+import Achievements from './Achievements';
 
 export default function Analytics({ data }) {
   const chartData = useMemo(() => {
@@ -44,11 +46,29 @@ export default function Analytics({ data }) {
   }
 
   return (
-    <section className="view active">
+    <section className="view active" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
        <div className="header-banner glass-panel">
          <h2>Analytics Dashboard</h2>
-         <p>Your mood trends over the last 7 days</p>
+         <p>Your mood trends & cloud predicted averages</p>
        </div>
+
+       {/* Additional DB API Stats Layer */}
+       {data.stats && (
+         <div className="stats-container">
+           <div className="stat-card glass-panel">
+             <div className="stat-info">
+               <span className="stat-value">{data.stats.totalLogs}</span>
+               <span className="stat-label">Lifetime Entries</span>
+             </div>
+           </div>
+           <div className="stat-card glass-panel" style={{flex: 1.5}}>
+             <div className="stat-info">
+               <span className="stat-value" style={{color: '#064e3b'}}>{data.stats.predictiveAvgPerDay} <span style={{fontSize: '1.2rem'}}>logs / active day</span></span>
+               <span className="stat-label">Predicted Engagement Rate</span>
+             </div>
+           </div>
+         </div>
+       )}
 
        <div className="glass-panel" style={{height: '250px', padding: '1.5rem'}}>
          <ResponsiveContainer width="100%" height="100%">
@@ -64,6 +84,16 @@ export default function Analytics({ data }) {
               <Bar dataKey="Anxiety" fill="var(--danger)" radius={[4, 4, 0, 0]} />
             </BarChart>
          </ResponsiveContainer>
+       </div>
+
+       {/* Heatmap Activity Grid */}
+       <div className="glass-panel" style={{ padding: '1.5rem' }}>
+         <Heatmap history={data.history || {}} />
+       </div>
+
+       {/* Achievements Badges */}
+       <div className="glass-panel" style={{ padding: '1.5rem' }}>
+         <Achievements data={data} />
        </div>
     </section>
   );
