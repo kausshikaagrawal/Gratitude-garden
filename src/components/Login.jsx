@@ -20,7 +20,17 @@ export default function Login({ onLoginSuccess }) {
         body: JSON.stringify({ username, password })
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        if (text.includes('ECONNREFUSED') || text.includes('proxy') || response.status === 502 || response.status === 504) {
+          throw new Error('Backend server is unreachable. Please run "npm run dev:full" or start the server on port 3001.');
+        }
+        throw new Error(text || `Server error (${response.status})`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Something went wrong');
